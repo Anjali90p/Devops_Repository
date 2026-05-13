@@ -1,0 +1,56 @@
+# Operating System
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment files (NEVER commit these)
+.env
+.env.local
+.env.production
+*.env
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+*.egg-info/
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Docker
+.dockerignore
+
+# Build artifacts
+dist/
+build/
+target/
+*.jar
+*.war
+*.class
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.p12
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak

@@ -1,0 +1,14 @@
+# Custom Nginx image with a custom HTML page
+FROM nginx:alpine
+
+# Remove default nginx page
+RUN rm /usr/share/nginx/html/index.html
+
+# Copy custom HTML
+COPY index.html /usr/share/nginx/html/index.html
+
+# Expose port 80
+EXPOSE 80
+
+# Nginx starts by default from the base image
+CMD ["nginx", "-g", "daemon off;"]
