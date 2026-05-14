@@ -1,0 +1,77 @@
+version: "3.8"
+
+# ============================================================
+# Use Case 3: Java Spring Boot + PostgreSQL
+# Architecture: Browser → Spring Boot (8080) → PostgreSQL
+# ============================================================
+
+services:
+
+  # ── PostgreSQL Database ───────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    restart: always
+    environment:
+      POSTGRES_DB: springdb
+      POSTGRES_USER: springuser
+      POSTGRES_PASSWORD: springpassword
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql   # Run on first start
+    networks:
+      - spring-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U springuser -d springdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Spring Boot Application ───────────────────────────────
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: spring-app
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      # Spring datasource config
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/springdb
+      SPRING_DATASOURCE_USERNAME: springuser
+      SPRING_DATASOURCE_PASSWORD: springpassword
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+      # Active profile
+      SPRING_PROFILES_ACTIVE: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - spring-network
+
+  # ── pgAdmin (PostgreSQL Admin UI) ─────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    restart: always
+    ports:
+      - "5050:80"                     # Access at http://localhost:5050
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@devops.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    depends_on:
+      - postgres
+    networks:
+      - spring-network
+
+# ── Named Volumes ─────────────────────────────────────────
+volumes:
+  postgres-data:
+    driver: local
+
+# ── Networks ──────────────────────────────────────────────
+networks:
+  spring-network:
+    driver: bridge

@@ -1,0 +1,60 @@
+version: "3.8"
+
+# ============================================================
+# Use Case 1: WordPress + MySQL
+# Architecture: Browser → WordPress (8080) → MySQL
+# ============================================================
+
+services:
+
+  # ── MySQL Database ────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: wordpress-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wpuser
+      MYSQL_PASSWORD: wppassword
+    volumes:
+      - db-data:/var/lib/mysql        # Persist database files
+    networks:
+      - wp-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── WordPress Application ─────────────────────────────────
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress-app
+    restart: always
+    ports:
+      - "8080:80"                     # Access at http://localhost:8080
+    environment:
+      WORDPRESS_DB_HOST: db:3306      # Uses service name as hostname
+      WORDPRESS_DB_USER: wpuser
+      WORDPRESS_DB_PASSWORD: wppassword
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wp-data:/var/www/html         # Persist WordPress files
+    depends_on:
+      db:
+        condition: service_healthy    # Wait until MySQL passes healthcheck
+    networks:
+      - wp-network
+
+# ── Named Volumes ─────────────────────────────────────────
+volumes:
+  db-data:
+    driver: local
+  wp-data:
+    driver: local
+
+# ── Networks ──────────────────────────────────────────────
+networks:
+  wp-network:
+    driver: bridge
